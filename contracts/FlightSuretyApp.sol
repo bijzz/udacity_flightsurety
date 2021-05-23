@@ -19,7 +19,7 @@ contract FlightSuretyApp {
     // Flight status codees
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
-    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
+    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20; // dealyed due to airline - triggers payment proccess
     uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
@@ -114,6 +114,9 @@ contract FlightSuretyApp {
    /**
     * @dev Register a future flight for insuring.
     *
+    * Project Info: Can be hardcoded / list of flights in the Dapp for this project (mvp).
+    * Or provide ability to registerFlight and retrieveListOfFlights later.
+    * UI should then only show the future / upcoming flights.
     */  
     function registerFlight
                                 (
@@ -127,6 +130,9 @@ contract FlightSuretyApp {
    /**
     * @dev Called after oracle has updated flight status
     *
+    * Project Info: Triggered when Oracle comes back with a result.
+    * Statuscode = 20 start process of payout.
+    * 
     */  
     function processFlightStatus
                                 (
@@ -142,6 +148,8 @@ contract FlightSuretyApp {
 
 
     // Generate a request for oracles to fetch flight information
+    // Project Info: Triggered from the UI as 3rd party APIs are not used for this project.
+    // Creates Event for Oracles.
     function fetchFlightStatus
                         (
                             address airline,
