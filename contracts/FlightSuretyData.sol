@@ -12,11 +12,19 @@ contract FlightSuretyData {
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
 
+    enum Membership {REGISTERED, VOTER}
+
     struct AirlinePool {
         string name;
-        uint256 fund;
-        bool isRegistered;
+        uint256 fund; 
+        Membership state;
+        bool exists;
+        address[] multiCalls;
+        //bool hasFund; // equal to fund != 0 - funds can be used up by insurance, still fund keeps history
     }
+
+    // registered and funded airlines count
+    uint256 numberOfVoters;
 
     mapping(address => bool) private authorizedCallers;
     mapping(address => AirlinePool) private airlines;
@@ -39,8 +47,9 @@ contract FlightSuretyData {
                                 public 
     {
         contractOwner = msg.sender;
+        numberOfVoters = 0;
         // add first airline
-        airlines[_firstAirlineAddress] =  AirlinePool(_firstAirlineName, 0, true);
+        airlines[_firstAirlineAddress] =  AirlinePool(_firstAirlineName, 0, Membership.REGISTERED, true, new address[](0));
     }
 
     /********************************************************************************************/
@@ -77,6 +86,24 @@ contract FlightSuretyData {
     modifier requireAuthorizedCaller()
     {
         require(isAuthorizedCaller(msg.sender), "Caller is not authorized to use data contract");
+        _;
+    }
+
+    /**
+    * @dev Modifier that requires the "ContractOwner" account to be the function caller
+    */
+    modifier requireVoter()
+    {
+        require(airlines[msg.sender].state == Membership.VOTER, "Caller is not a voter");
+        _;
+    }
+
+    /**
+    * @dev Modifier that requires the "ContractOwner" account to be the function caller
+    */
+    modifier requireNotRegistered()
+    {
+        require(!airlines[msg.sender].exists, "Airline is already registered");
         _;
     }
 
@@ -117,6 +144,37 @@ contract FlightSuretyData {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
+    function getAirlineState(address _airlineAddress) public view returns (uint8){
+        return uint8(airlines[_airlineAddress].state);
+    }
+
+    function doesAirlineExist(address _airlineAddress) public view returns (bool){
+        return airlines[_airlineAddress].exists;
+    }
+
+    function getNumberOfVoters() public view returns (uint256) {
+        return numberOfVoters;
+    }
+
+    function addVoteForAirline(address _airlineAddress, address _voterAddress) public {
+
+        bool isDuplicate = false;
+        for(uint c=0; c<airlines[_airlineAddress].multiCalls.length; c++) {
+            if (airlines[_airlineAddress].multiCalls[c] ==_voterAddress) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        require(!isDuplicate, "Vote has already been given.");
+
+        airlines[_airlineAddress].multiCalls.push(_voterAddress);
+
+    }
+
+    function getNumberOfVotes(address _airlineAddress) public view returns (uint256) {
+        return airlines[_airlineAddress].multiCalls.length;
+    }
+
     function isAirline(
                         address _airlineAddress
                       )
@@ -125,7 +183,12 @@ contract FlightSuretyData {
                       requireAuthorizedCaller
                       returns(bool)
     {
-        return airlines[_airlineAddress].isRegistered;
+       if (airlines[_airlineAddress].exists) {
+           return airlines[_airlineAddress].state == Membership.VOTER;
+       } else {
+           return false;
+       }
+        //return airlines[_airlineAddress].exists;
     }
 
     function authorizeCaller(address _address) 
@@ -158,8 +221,13 @@ contract FlightSuretyData {
                             external
                             requireIsOperational
                             requireAuthorizedCaller
+                            //requireNotRegistered
     {
-        airlines[_airlineAddress] = AirlinePool(_airlineName, 0, false);
+        // Membership(_state)
+        //if (Membership(_state) = Membership.REGISTERED) {
+        if(!airlines[msg.sender].exists) airlines[_airlineAddress] = AirlinePool(_airlineName, 0, Membership.REGISTERED, true, new address[](0));
+       // }
+        
 
     }
 
@@ -215,11 +283,16 @@ contract FlightSuretyData {
                             public
                             payable
     {
-        require(airlines[_airlineAddress].isRegistered, "Airline needs to be registered before it is allowed to fund");
+        require(airlines[_airlineAddress].exists, "Airline needs to in airline pool before it is allowed to fund");
 
         // keep internal balance
         uint256 balance = airlines[_airlineAddress].fund;
         airlines[_airlineAddress].fund = balance.add(msg.value);
+        // if airline funds for the first time
+        if (airlines[_airlineAddress].state == Membership.REGISTERED) {
+            airlines[_airlineAddress].state = Membership.VOTER;
+            numberOfVoters=numberOfVoters.add(1);
+        }
 
     }
 

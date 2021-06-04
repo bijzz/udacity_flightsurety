@@ -64,6 +64,14 @@ contract FlightSuretyApp {
         _;
     }
 
+    /**
+    * @dev Modifier that requires the "ContractOwner" account to be the function caller
+    */
+    modifier requireVoter()
+    {
+        require(dataContract.getAirlineState(msg.sender) == 1, "Caller is not a voter");
+        _;
+    }
 
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
@@ -134,11 +142,34 @@ contract FlightSuretyApp {
                                 string _airlineName
                             )
                             requireIsOperational
+                            requireVoter
                             external
                             returns(bool success, uint256 votes)
     {
-        dataContract.registerAirline(_airlineAddress, _airlineName);
-        return (success, 0);
+        if (dataContract.getNumberOfVoters() <= 3) {
+            dataContract.registerAirline(_airlineAddress, _airlineName);  
+            return (true, 0);  
+        } else {
+            // multi party consensus
+            uint256 minVotes = dataContract.getNumberOfVoters().mul(5).div(10);
+            uint256 nrVotes = dataContract.getNumberOfVotes(_airlineAddress);
+            if (nrVotes >= minVotes) {
+                dataContract.registerAirline(_airlineAddress, _airlineName);    
+                return (true, nrVotes);
+            } else {
+                return (false, nrVotes);
+            }
+        }
+    }
+
+    function addVoteForAirline(
+                                address _airlineAddress
+           )
+           requireIsOperational
+           requireVoter
+           external
+    {
+        dataContract.addVoteForAirline(_airlineAddress, msg.sender);
     }
 
 
@@ -387,5 +418,12 @@ contract FlightSuretyData {
     function creditInsuress() external pure;
     function pay() external pure;
     function fund(address _airlineAddress) public payable;
-    function getFlightKey(address airline, string memory flight, uint256 timestamp) pure internal;
+    function getFlightKey(address airline, string memory flight, uint256 timestamp) pure internal returns(bytes32);
+    function getAirlineState(address _airlineAddress) public view returns (uint8);
+    function getNumberOfVoters() public view returns (uint256);
+    function getNumberOfVotes(address _airlineAddress) public view returns (uint256);
+    function addVoteForAirline(address _airlineAddress, address _voterAddress) public;
+    function authorizeCaller(address _address) external;
+    function isAuthorizedCaller(address _address) internal view returns(bool);
+    function doesAirlineExist(address _airlineAddress) public view returns(bool);
 }
