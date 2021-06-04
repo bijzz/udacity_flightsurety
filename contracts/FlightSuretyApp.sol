@@ -34,7 +34,8 @@ contract FlightSuretyApp {
     }
     mapping(bytes32 => Flight) private flights;
 
- 
+    FlightSuretyData dataContract;
+
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -63,6 +64,7 @@ contract FlightSuretyApp {
         _;
     }
 
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -73,10 +75,15 @@ contract FlightSuretyApp {
     */
     constructor
                                 (
+                                    address _dataContract
+                                   // address _firstAirlineAddress,
+                                    //string _firstAirlineName
                                 ) 
                                 public 
     {
         contractOwner = msg.sender;
+        dataContract = FlightSuretyData(_dataContract);
+        //dataContract.registerAirline(_firstAirlineAddress, _firstAirlineName);
     }
 
     /********************************************************************************************/
@@ -85,28 +92,52 @@ contract FlightSuretyApp {
 
     function isOperational() 
                             public 
-                            pure 
+                            view 
                             returns(bool) 
     {
-        return true;  // Modify to call data contract's status
+        return dataContract.isOperational();  // Modify to call data contract's status
+    }
+
+    function isAirline(
+                        address _airlineAddress
+                      )
+                      public
+                      view
+                      returns(bool)
+    {
+        return dataContract.isAirline(_airlineAddress);
     }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-  
+    /**
+    * @dev Airline funds the insurance
+    */
+    function fund() 
+                 requireIsOperational
+                 external 
+                 payable 
+    {
+        require(msg.value == 10 ether, "Fund must be exactly 10 ether");
+        dataContract.fund.value(msg.value)(msg.sender);
+    }
+
    /**
     * @dev Add an airline to the registration queue
     *
     */   
     function registerAirline
                             (   
+                                address _airlineAddress,
+                                string _airlineName
                             )
+                            requireIsOperational
                             external
-                            pure
                             returns(bool success, uint256 votes)
     {
+        dataContract.registerAirline(_airlineAddress, _airlineName);
         return (success, 0);
     }
 
@@ -124,6 +155,7 @@ contract FlightSuretyApp {
                                 external
                                 pure
     {
+
 
     }
     
@@ -343,3 +375,17 @@ contract FlightSuretyApp {
 // endregion
 
 }   
+
+// Stubs for FlightSuretyData
+
+contract FlightSuretyData {
+    function isOperational() public view returns (bool);
+    function isAirline(address _airlineAddress) public view returns (bool);
+    function setOperatingStatus(bool _mode) external;
+    function registerAirline(address _airlineAddress, string _airlineName) external;
+    function buy() external payable;
+    function creditInsuress() external pure;
+    function pay() external pure;
+    function fund(address _airlineAddress) public payable;
+    function getFlightKey(address airline, string memory flight, uint256 timestamp) pure internal;
+}
