@@ -13,6 +13,7 @@ contract FlightSuretyData {
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
 
     enum Membership {REGISTERED, VOTER}
+    enum Status {ACTIVE, PAYED}
 
     struct AirlinePool {
         string name;
@@ -20,7 +21,19 @@ contract FlightSuretyData {
         Membership state;
         bool exists;
         address[] multiCalls;
-        //bool hasFund; // equal to fund != 0 - funds can be used up by insurance, still fund keeps history
+    }
+  //  struct Passenger {
+  //      address addressPassenger;
+  //      uint256 amountPayed;
+  //      uint256 amountDebit;
+  //      bool exists;
+  //  }
+    struct Insurance {
+        //mapping(address => Passenger) passenger;
+        //address[] passengers;
+        address[] passengers;
+        Status state;
+        bool exists;
     }
 
     // registered and funded airlines count
@@ -28,7 +41,12 @@ contract FlightSuretyData {
 
     mapping(address => bool) private authorizedCallers;
     mapping(address => AirlinePool) private airlines;
-    //mapping(address => uint256) airlineFunds;
+    // flight
+    mapping(bytes32 => Insurance) private insurances;
+    // flight -> passenger
+    mapping(bytes32 => mapping(address => uint256)) private customerDebit;
+    // flight -> passenger
+    mapping(bytes32 => mapping(address => uint256)) private customerInsurancePayment;
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -99,7 +117,7 @@ contract FlightSuretyData {
     }
 
     /**
-    * @dev Modifier that requires the "ContractOwner" account to be the function caller
+    * @dev Modifier that requires registered airline to be the function caller
     */
     modifier requireNotRegistered()
     {
@@ -224,9 +242,7 @@ contract FlightSuretyData {
                             //requireNotRegistered
     {
         // Membership(_state)
-        //if (Membership(_state) = Membership.REGISTERED) {
         if(!airlines[msg.sender].exists) airlines[_airlineAddress] = AirlinePool(_airlineName, 0, Membership.REGISTERED, true, new address[](0));
-       // }
         
 
     }
@@ -237,23 +253,56 @@ contract FlightSuretyData {
     *
     */   
     function buy
-                            (                             
+                            ( 
+                                address _passengerAddress,
+                                bytes32 _flightKey
                             )
+                            requireIsOperational
                             external
                             payable
-    {
+    {   
+        if (insurances[_flightKey].exists) {
+            
+            insurances[_flightKey].passengers.push(_passengerAddress);
+            customerInsurancePayment[_flightKey][_passengerAddress] = msg.value;
 
+            // if (insurances[_flightKey].passenger[_passengerAddress].exists) {
+            //     insurances[_flightKey].passenger[_passengerAddress].amount = insurances[_flightKey].passenger[_passengerAddress].amount.add(msg.value);
+            // } else {
+            //     insurances[_flightKey].passenger[_passengerAddress] = Passenger(msg.value, 0, true);
+            // }
+        } else {
+            //Passenger[] storage passengers;
+            //Passenger memory passengerData = Passenger(_passengerAddress, msg.value, true);
+            //passengers.push(passengerData);
+            insurances[_flightKey] = Insurance({ passengers: new address[](0), state: Status.ACTIVE, exists: true});
+            insurances[_flightKey].passengers.push(_passengerAddress);
+
+            //insurances[_flightKey].passenger[_passengerAddress] =  Passenger(msg.value, 0, true);
+        }
+        
     }
 
     /**
      *  @dev Credits payouts to insurees
     */
-    function creditInsurees
+    function creditInsuree
                                 (
+                                    bytes32 _flightKey
                                 )
                                 external
-                                pure
     {
+        require(insurances[_flightKey].exists == true, "No insurances for the flight");
+        require(insurances[_flightKey].state == Status.ACTIVE, "Insurance is already completed.");
+
+        insurances[_flightKey].state = Status.PAYED;
+        
+        for(uint c=0; c<insurances[_flightKey].passengers.length; c++) {
+                address customerAddress = insurances[_flightKey].passengers[c];
+                customerDebit[_flightKey][customerAddress] = customerInsurancePayment[_flightKey][customerAddress].mul(15).div(10);
+        }
+
+       
     }
     
 

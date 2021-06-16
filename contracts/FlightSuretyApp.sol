@@ -132,6 +132,18 @@ contract FlightSuretyApp {
         dataContract.fund.value(msg.value)(msg.sender);
     }
 
+    /**
+    * @dev Buy insurance
+    */
+    function buy(bytes32 _flightKey) 
+                 requireIsOperational
+                 external 
+                 payable 
+    {
+        require(msg.value <= 1 ether, "Insurance may be at most one ether.");
+        dataContract.buy.value(msg.value)(msg.sender, _flightKey);
+    }
+
    /**
     * @dev Add an airline to the registration queue
     *
@@ -414,8 +426,8 @@ contract FlightSuretyData {
     function isAirline(address _airlineAddress) public view returns (bool);
     function setOperatingStatus(bool _mode) external;
     function registerAirline(address _airlineAddress, string _airlineName) external;
-    function buy() external payable;
-    function creditInsuress() external pure;
+    function buy(address _passengerAddress, bytes32 _flightKey) external payable;
+    function creditInsures() external pure;
     function pay() external pure;
     function fund(address _airlineAddress) public payable;
     function getFlightKey(address airline, string memory flight, uint256 timestamp) pure internal returns(bytes32);
