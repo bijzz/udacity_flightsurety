@@ -135,13 +135,19 @@ contract FlightSuretyApp {
     /**
     * @dev Buy insurance
     */
-    function buy(bytes32 _flightKey) 
+    function buy(
+                 address airline,
+                 string flight,
+                 uint256 timestamp) 
                  requireIsOperational
                  external 
                  payable 
     {
         require(msg.value <= 1 ether, "Insurance may be at most one ether.");
-        dataContract.buy.value(msg.value)(msg.sender, _flightKey);
+
+        bytes32 flightKey = dataContract.getFlightKey(airline, flight, timestamp);
+
+        dataContract.buy.value(msg.value)(msg.sender, flightKey);
     }
 
    /**
@@ -209,6 +215,8 @@ contract FlightSuretyApp {
     * Statuscode = 20 start process of payout.
     * 
     */  
+    // NOTE: Supposed to be internal.
+    //       Set to public only for running unit tests.
     function processFlightStatus
                                 (
                                     address airline,
@@ -216,9 +224,14 @@ contract FlightSuretyApp {
                                     uint256 timestamp,
                                     uint8 statusCode
                                 )
-                                internal
-                                pure
+                                public 
     {
+        // TODO: Noch stoppen falls 1x prozessiert?
+        if(statusCode == STATUS_CODE_LATE_AIRLINE) {
+            bytes32 flightKey = dataContract.getFlightKey(airline, flight, timestamp);
+            dataContract.creditInsuree(flightKey);
+        }
+
     }
 
 
@@ -358,18 +371,18 @@ contract FlightSuretyApp {
     }
 
 
-    function getFlightKey
-                        (
-                            address airline,
-                            string flight,
-                            uint256 timestamp
-                        )
-                        pure
-                        internal
-                        returns(bytes32) 
-    {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
-    }
+    // function getFlightKey
+    //                     (
+    //                         address airline,
+    //                         string flight,
+    //                         uint256 timestamp
+    //                     )
+    //                     pure
+    //                     internal
+    //                     returns(bytes32) 
+    // {
+    //     return keccak256(abi.encodePacked(airline, flight, timestamp));
+    // }
 
     // Returns array of three non-duplicating integers from 0-9
     function generateIndexes
@@ -426,11 +439,11 @@ contract FlightSuretyData {
     function isAirline(address _airlineAddress) public view returns (bool);
     function setOperatingStatus(bool _mode) external;
     function registerAirline(address _airlineAddress, string _airlineName) external;
-    function buy(address _passengerAddress, bytes32 _flightKey) external payable;
-    function creditInsures() external pure;
+    function buy(address _passengerAddress, bytes32 _flightKey) public payable; 
+    function creditInsuree(bytes32 _flightKey) external;
     function pay() external pure;
     function fund(address _airlineAddress) public payable;
-    function getFlightKey(address airline, string memory flight, uint256 timestamp) pure internal returns(bytes32);
+    function getFlightKey(address airline, string memory flight, uint256 timestamp) public pure returns(bytes32);
     function getAirlineState(address _airlineAddress) public view returns (uint8);
     function getNumberOfVoters() public view returns (uint256);
     function getNumberOfVotes(address _airlineAddress) public view returns (uint256);

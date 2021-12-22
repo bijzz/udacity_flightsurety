@@ -226,6 +226,23 @@ contract FlightSuretyData {
         return authorizedCallers[_address] == true;
     }
 
+
+
+    function getCustomerDebit(
+                                    address _customerAddress,
+                                    address _airline,
+                                    string _flight,
+                                    uint256 _timestamp
+                               )
+                               public
+                               view
+                               returns(uint256)
+    {
+        require(msg.sender == _customerAddress, "Customer can only see his own debit");
+        bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
+        return customerDebit[flightKey][_customerAddress];
+    }
+
    /**
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
@@ -258,7 +275,7 @@ contract FlightSuretyData {
                                 bytes32 _flightKey
                             )
                             requireIsOperational
-                            external
+                            public
                             payable
     {   
         if (insurances[_flightKey].exists) {
@@ -296,7 +313,7 @@ contract FlightSuretyData {
         require(insurances[_flightKey].state == Status.ACTIVE, "Insurance is already completed.");
 
         insurances[_flightKey].state = Status.PAYED;
-        
+
         for(uint c=0; c<insurances[_flightKey].passengers.length; c++) {
                 address customerAddress = insurances[_flightKey].passengers[c];
                 customerDebit[_flightKey][customerAddress] = customerInsurancePayment[_flightKey][customerAddress].mul(15).div(10);
@@ -332,7 +349,7 @@ contract FlightSuretyData {
                             public
                             payable
     {
-        require(airlines[_airlineAddress].exists, "Airline needs to in airline pool before it is allowed to fund");
+        require(airlines[_airlineAddress].exists, "Airline needs to be in airline pool before it is allowed to fund");
 
         // keep internal balance
         uint256 balance = airlines[_airlineAddress].fund;
@@ -351,8 +368,8 @@ contract FlightSuretyData {
                             string memory flight,
                             uint256 timestamp
                         )
-                        pure
-                        internal
+                        public
+                        pure 
                         returns(bytes32) 
     {
         return keccak256(abi.encodePacked(airline, flight, timestamp));

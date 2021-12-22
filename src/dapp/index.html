@@ -24,7 +24,29 @@
         <div id="display-wrapper" class="top-20">
         </div>
         <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+            <label class="form">Flight</label> 
+            
+            <select id="flight-number-select">
+                <option selected value="BD674">BD674</option>
+                <option value="AA7991">AA7991</option>
+                <option value="BA1442">BA1442</option>
+                <option value="ZL4127">ZL4127</option>
+              </select>
+            <!-- <input type="text" id="flight-number">  -->
+            <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles = Fetch Flight Status Update</btn>
+        </div>
+        <div class="row top-20">
+            <label class="form">Flight </label> 
+            
+            <select id="flight-number-ins-select">
+                <option selected value="BD674">BD674</option>
+                <option value="AA7991">AA7991</option>
+                <option value="BA1442">BA1442</option>
+                <option value="ZL4127">ZL4127</option>
+              </select>
+              <label class="form">Insurance amount</label> 
+             <input type="text" value="1" id="insurance-amount"> 
+            <btn class="btn btn-primary" id="submit-insurance">Buy flight insurance</btn>
         </div>
     </main>
 
