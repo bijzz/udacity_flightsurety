@@ -31,9 +31,10 @@ contract FlightSuretyData {
     struct Insurance {
         //mapping(address => Passenger) passenger;
         //address[] passengers;
-        address[] passengers;
+    
         Status state;
         bool exists;
+        address[] passengers;
     }
 
     // registered and funded airlines count
@@ -272,30 +273,30 @@ contract FlightSuretyData {
     function buy
                             ( 
                                 address _passengerAddress,
-                                bytes32 _flightKey
+                                bytes32 _flightKey,
+                                uint256 _amount
                             )
                             requireIsOperational
                             public
-                            payable
+                        
     {   
+
         if (insurances[_flightKey].exists) {
-            
-            insurances[_flightKey].passengers.push(_passengerAddress);
-            customerInsurancePayment[_flightKey][_passengerAddress] = msg.value;
 
-            // if (insurances[_flightKey].passenger[_passengerAddress].exists) {
-            //     insurances[_flightKey].passenger[_passengerAddress].amount = insurances[_flightKey].passenger[_passengerAddress].amount.add(msg.value);
-            // } else {
-            //     insurances[_flightKey].passenger[_passengerAddress] = Passenger(msg.value, 0, true);
-            // }
+            insurances[_flightKey].passengers.push(_passengerAddress);
+            customerInsurancePayment[_flightKey][_passengerAddress] = _amount;
+
         } else {
-            //Passenger[] storage passengers;
-            //Passenger memory passengerData = Passenger(_passengerAddress, msg.value, true);
-            //passengers.push(passengerData);
-            insurances[_flightKey] = Insurance({ passengers: new address[](0), state: Status.ACTIVE, exists: true});
+
+            //insurances[_flightKey] = Insurance({ passengers: new address[](0), state: Status.ACTIVE, exists: true});
+            
+            //insurances[_flightKey].passengers.push(_passengerAddress);
+            insurances[_flightKey].state = Status.ACTIVE;
+            insurances[_flightKey].exists = true;
             insurances[_flightKey].passengers.push(_passengerAddress);
 
-            //insurances[_flightKey].passenger[_passengerAddress] =  Passenger(msg.value, 0, true);
+            customerInsurancePayment[_flightKey][_passengerAddress] = _amount;
+
         }
         
     }
@@ -307,6 +308,7 @@ contract FlightSuretyData {
                                 (
                                     bytes32 _flightKey
                                 )
+                                requireIsOperational
                                 external
     {
         require(insurances[_flightKey].exists == true, "No insurances for the flight");

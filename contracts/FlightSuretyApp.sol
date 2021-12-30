@@ -132,6 +132,19 @@ contract FlightSuretyApp {
         dataContract.fund.value(msg.value)(msg.sender);
     }
 
+
+    function creditInsuree(address airline,
+                 string flight,
+                 uint256 timestamp)
+                 requireIsOperational 
+                 public
+                 {
+
+        bytes32 flightKey = dataContract.getFlightKey(airline, flight, timestamp);
+        
+        dataContract.creditInsuree(flightKey);
+    }
+
     /**
     * @dev Buy insurance
     */
@@ -146,8 +159,8 @@ contract FlightSuretyApp {
         require(msg.value <= 1 ether, "Insurance may be at most one ether.");
 
         bytes32 flightKey = dataContract.getFlightKey(airline, flight, timestamp);
-
-        dataContract.buy.value(msg.value)(msg.sender, flightKey);
+        
+        dataContract.buy(msg.sender, flightKey, msg.value);
     }
 
    /**
@@ -439,7 +452,7 @@ contract FlightSuretyData {
     function isAirline(address _airlineAddress) public view returns (bool);
     function setOperatingStatus(bool _mode) external;
     function registerAirline(address _airlineAddress, string _airlineName) external;
-    function buy(address _passengerAddress, bytes32 _flightKey) public payable; 
+    function buy(address _passengerAddress, bytes32 _flightKey, uint256 amount) public; 
     function creditInsuree(bytes32 _flightKey) external;
     function pay() external pure;
     function fund(address _airlineAddress) public payable;

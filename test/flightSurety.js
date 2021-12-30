@@ -2,6 +2,7 @@
 var Test = require('../config/testConfig.js');
 var BigNumber = require('bignumber.js');
 
+
 contract('Flight Surety Tests', async (accounts) => {
 
   var config;
@@ -251,6 +252,7 @@ it('(passenger) buy insurance - correct amount of funds', async () => {
   let passenger = accounts[7];
   let fundingAmount = web3.utils.toWei("0.1", "ether");
   let reverted = false;
+  
 
   // ACT
   try {
@@ -276,6 +278,7 @@ it('(passenger) credit passenger', async () => {
   let fundingAmount = web3.utils.toWei("0.1", "ether");
   let creditedAmount = web3.utils.toWei("0.15", "ether");
   let reverted = false;
+  const toBN = web3.utils.toBN;
 
   // ACT
   // 1 - fund flight
@@ -289,13 +292,17 @@ it('(passenger) credit passenger', async () => {
 
   await config.flightSuretyApp.processFlightStatus(airline1, flightIdentifier, takeOffTime, 20)
 
-  // 3 - check debit
-  debit = await config.flightSuretyData.getCustomerDebit(passenger, airline1, flightIdentifier, takeOffTime, {from: passenger})
+  // 3 - check debit after paying out 1.5x paid amount
+  let debit = await config.flightSuretyData.getCustomerDebit(passenger, airline1, flightIdentifier, takeOffTime, {from: passenger})
+  //console.log(debit.toString())
 
   // ASSERT
   assert.equal(reverted, false, "It was not possible to perform funding for insurance");
-  assert.equal(debit.toString(), "150000000000000000" , "Credit not 1.5x paid amount");
+  //assert.equal(debit.toString(), "150000000000000000" , "Credit not 1.5x paid amount");
+  assert.equal(debit.toString(), toBN(15E16).toString() , "Credit not 1.5x paid amount");
 
 });
+
+
 
 });

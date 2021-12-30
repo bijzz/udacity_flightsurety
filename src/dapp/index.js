@@ -29,10 +29,11 @@ import './flightsurety.css';
         // User-submitted transaction
         DOM.elid('submit-insurance').addEventListener('click', () => {
             let flight = DOM.elid('flight-number-ins-select').value;
+            let flightTakeOff = DOM.elid('flight-takeoff').value;
             let amount = DOM.elid('insurance-amount').value;
             console.log("orderd insurance")
             // Write transaction
-            contract.buy(flight, amount, (error, result) => {
+            contract.buy(flight, flightTakeOff, amount, (error, result) => {
                 // TODO
                 display('Insurance', 'Bought insurance', [ { label: 'Response', error: error, value: result} ]);
             });

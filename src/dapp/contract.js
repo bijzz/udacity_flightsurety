@@ -15,6 +15,10 @@ export default class Contract {
     }
 
     initialize(callback) {
+
+        let balance = this.web3.utils.toWei("10", "ether");
+
+
         this.web3.eth.getAccounts((error, accts) => {
            
             this.owner = accts[0];
@@ -25,12 +29,16 @@ export default class Contract {
                 this.airlines.push(accts[counter++]);
             }
 
+            this.flightSuretyApp.methods.fund().send({from: this.airlines[0], value: balance});
+
             while(this.passengers.length < 5) {
                 this.passengers.push(accts[counter++]);
             }
 
             callback();
         });
+
+
     }
 
     isOperational(callback) {
@@ -40,12 +48,12 @@ export default class Contract {
             .call({ from: self.owner}, callback);
     }
 
-    buy(flight, amount) {
+    buy(flight, flightTakeOff, amount, callback) {
         let self = this;
         self.flightSuretyApp.methods
-            .buy(flight)
-            .send({ from: self.owner,  value: this.web3.utils.toWei(amount.toString(), 'ether')}, (error, result) => {
-                callback(error, payload);
+            .buy(self.airlines[0], flight, flightTakeOff)
+            .send({ from: self.owner,  value: this.web3.utils.toWei(amount, "ether"), gas: 1000000}, (error, result) => {
+                callback(error, result);
             });
     }
 
