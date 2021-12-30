@@ -1,52 +1,66 @@
-# FlightSurety
+# Flight Surety
 
-FlightSurety is a sample application project for Udacity's Blockchain course.
+**Program**: Blockchain Developer Nanodegree Program
 
-## Install
+**Project**: Flight Surety
 
-This repository contains Smart Contract code in Solidity (using Truffle), tests (also using Truffle), dApp scaffolding (using HTML, CSS and JS) and server app scaffolding.
+**Date**: 30th of December 2021
 
-To install, download or clone the repo, then:
+The project is about flight delay insurance for passengers.
 
-`npm install`
-`truffle compile`
+- Managed as a collaboration between multiple airlines
+  
+- Passengers purchase insurance prior to flight
+  
+- If flight is delayed due to airline fault, passengers are paid 1.5x the amount they paid for the insurance.
+  
+- Oracles are providing flight status information.
 
-## Develop Client
+## Tools
 
-To run truffle tests:
+- `Etherum` decentralized platform for running smart contracts
+  
+- `Truffle` as a development environment to test and deploy contracts.
+  
+- `Metamask` browser extension providing wallet functionality to interact with DApp.
+  
 
-`truffle test ./test/flightSurety.js`
-`truffle test ./test/oracles.js`
+## Dependencies
 
-To use the dapp:
+Truffle Version: `v.5.2.0`
 
-`truffle migrate`
-`npm run dapp`
+Solidity: `0.4.25`
 
-To view dapp:
+Ganache CLI: `v6.12.2`
 
-`http://localhost:8000`
+Node: `v14.16.0`
 
-## Develop Server
+Web3.js `v.1.2.9`
 
-`npm run server`
-`truffle test ./test/oracles.js`
+npm`v7.7.0`
 
-## Deploy
+## Setup
 
-To build dapp for prod:
-`npm run dapp:prod`
+```
+# smart contract
+ganache-cli -l 9999999 -m "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat" --accounts=100
+truffle compile # compile contract to build\contracts
+truffle migrate # deploy smart contracts
+truffle test # run truffle tests
 
-Deploy the contents of the ./dapp folder
+# start up oracle server application
+npm run server
+# start up frontend dap
+truffle migrate
+npm run dapp
+```
 
+## Results
 
-## Resources
+Running `truffle test` yields:
 
-* [How does Ethereum work anyway?](https://medium.com/@preethikasireddy/how-does-ethereum-work-anyway-22d1df506369)
-* [BIP39 Mnemonic Generator](https://iancoleman.io/bip39/)
-* [Truffle Framework](http://truffleframework.com/)
-* [Ganache Local Blockchain](http://truffleframework.com/ganache/)
-* [Remix Solidity IDE](https://remix.ethereum.org/)
-* [Solidity Language Reference](http://solidity.readthedocs.io/en/v0.4.24/)
-* [Ethereum Blockchain Explorer](https://etherscan.io/)
-* [Web3Js Reference](https://github.com/ethereum/wiki/wiki/JavaScript-API)
+![](img/test.png)
+
+Viewing the UI allows to trigger Oracles and submit insurance funding.
+
+![](img/ui.png)
